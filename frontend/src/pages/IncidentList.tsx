@@ -1,23 +1,51 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Filter, Download } from 'lucide-react';
 
-// Mock data to visualize the UI
-const MOCK_INCIDENTS = [
-    { id: 'INC-2026-084', date: '2026-02-22T09:14:00Z', type: 'Physical Altercation', location: 'Courtroom 3B', status: 'Escalated', reporter: 'Officer Reed' },
-    { id: 'INC-2026-083', date: '2026-02-21T14:30:00Z', type: 'Contraband Found', location: 'Main Entrance Checkpoint', status: 'Open', reporter: 'Agent Smith' },
-    { id: 'INC-2026-082', date: '2026-02-20T11:00:00Z', type: 'Medical Emergency', location: 'Lobby', status: 'Closed', reporter: 'Lt. Dan' },
-    { id: 'INC-2026-081', date: '2026-02-19T16:45:00Z', type: 'Verbal Threat', location: 'Courtroom 1A', status: 'UnderReview', reporter: 'Judge Judy' },
-];
+interface Incident {
+    id: string;
+    incidentDate: string;
+    type: number; // For now, keeping as raw enum number
+    locationWithinCourthouse: string;
+    status: number;
+    reporterFirstName: string;
+    reporterLastName: string;
+}
 
 const IncidentList: React.FC = () => {
+    const [incidents, setIncidents] = useState<Incident[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const getStatusBadge = (status: string) => {
+    useEffect(() => {
+        fetch('http://localhost:5184/api/incidents')
+            .then(res => res.json())
+            .then(data => {
+                setIncidents(data);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Failed to fetch incidents:", err);
+                setLoading(false);
+            });
+    }, []);
+
+    const getStatusBadge = (status: number) => {
         switch (status) {
-            case 'Open': return <span className="badge badge-open">OPEN</span>;
-            case 'UnderReview': return <span className="badge badge-review">UNDER REVIEW</span>;
-            case 'Escalated': return <span className="badge badge-escalated">ESCALATED</span>;
-            case 'Closed': return <span className="badge badge-closed">CLOSED</span>;
-            default: return <span className="badge badge-open">{status}</span>;
+            case 0: return <span className="badge badge-open">OPEN</span>;
+            case 1: return <span className="badge badge-review">UNDER REVIEW</span>;
+            case 2: return <span className="badge badge-escalated">ESCALATED</span>;
+            case 3: return <span className="badge badge-closed">CLOSED</span>;
+            default: return <span className="badge badge-open">UNKNOWN</span>;
+        }
+    };
+
+    const getTypeString = (type: number) => {
+        switch (type) {
+            case 0: return "Physical Altercation";
+            case 1: return "Verbal Threat";
+            case 2: return "Medical Emergency";
+            case 3: return "Contraband Found";
+            case 4: return "Other";
+            default: return "Unknown";
         }
     };
 
@@ -54,14 +82,28 @@ const IncidentList: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {MOCK_INCIDENTS.map((inc) => (
+                        {loading && (
+                            <tr>
+                                <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                    Loading remote incidents from database...
+                                </td>
+                            </tr>
+                        )}
+                        {!loading && incidents.length === 0 && (
+                            <tr>
+                                <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                    No incidents found.
+                                </td>
+                            </tr>
+                        )}
+                        {!loading && incidents.map((inc) => (
                             <tr key={inc.id} style={{ borderBottom: '1px solid var(--border-glass)', transition: 'background-color 0.2s' }}>
-                                <td style={{ padding: '1.25rem 1.5rem', fontWeight: 500, color: 'var(--text-primary)' }}>{inc.id}</td>
-                                <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)' }}>{new Date(inc.date).toLocaleString()}</td>
-                                <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-primary)' }}>{inc.type}</td>
-                                <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)' }}>{inc.location}</td>
+                                <td style={{ padding: '1.25rem 1.5rem', fontWeight: 500, color: 'var(--text-primary)' }}>{inc.id.substring(0, 8).toUpperCase()}...</td>
+                                <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)' }}>{new Date(inc.incidentDate).toLocaleString()}</td>
+                                <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-primary)' }}>{getTypeString(inc.type)}</td>
+                                <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)' }}>{inc.locationWithinCourthouse}</td>
                                 <td style={{ padding: '1.25rem 1.5rem' }}>{getStatusBadge(inc.status)}</td>
-                                <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)' }}>{inc.reporter}</td>
+                                <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)' }}>{inc.reporterFirstName} {inc.reporterLastName}</td>
                             </tr>
                         ))}
                     </tbody>

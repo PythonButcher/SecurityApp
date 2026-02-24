@@ -42,10 +42,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
     
-    // Auto-migrate the database on startup during development
-    using var scope = app.Services.CreateScope();
-    var dbContext = scope.ServiceProvider.GetRequiredService<CourtroomDbContext>();
-    dbContext.Database.Migrate();
+    // Auto-migrate and Seed the database on startup during development
+    await CourtroomSecurity.Infrastructure.Data.Seeders.DbSeeder.SeedAsync(app.Services);
 }
 
 app.UseHttpsRedirection();

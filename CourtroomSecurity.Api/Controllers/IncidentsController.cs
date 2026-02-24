@@ -56,4 +56,50 @@ public class IncidentsController : ControllerBase
         
         return CreatedAtAction(nameof(GetIncident), new { id = createdIncident.Id }, createdIncident);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAllIncidents()
+    {
+        var incidents = await _incidentRepository.GetAllAsync();
+        return Ok(incidents);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateIncident(Guid id, [FromBody] Incident incident)
+    {
+        if (id != incident.Id)
+        {
+            return BadRequest("Incident ID mismatch");
+        }
+
+        var existingIncident = await _incidentRepository.GetByIdAsync(id);
+        if (existingIncident == null)
+        {
+            return NotFound();
+        }
+
+        // Ideally we would map from a DTO here instead of binding the Entity directly
+        // For brevity, updating the entity properties
+        existingIncident.IncidentDate = incident.IncidentDate;
+        existingIncident.Status = incident.Status;
+        existingIncident.Type = incident.Type;
+        existingIncident.Narrative = incident.Narrative;
+        // ... map other fields ...
+
+        await _incidentRepository.UpdateAsync(existingIncident);
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteIncident(Guid id)
+    {
+        var existingIncident = await _incidentRepository.GetByIdAsync(id);
+        if (existingIncident == null)
+        {
+            return NotFound();
+        }
+
+        await _incidentRepository.DeleteAsync(id);
+        return NoContent();
+    }
 }

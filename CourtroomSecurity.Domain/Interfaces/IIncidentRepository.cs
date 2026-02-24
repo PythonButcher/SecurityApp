@@ -7,8 +7,8 @@ namespace CourtroomSecurity.Domain.Interfaces;
 public interface IIncidentRepository
 {
     Task<Incident?> GetByIdAsync(Guid id);
+    Task<IEnumerable<Incident>> GetAllAsync();
     Task<Incident> AddAsync(Incident incident);
     Task UpdateAsync(Incident incident);
-    
-    // Future expansion: Add specific Get methods for filtering/reporting
+    Task DeleteAsync(Guid id);
 }
