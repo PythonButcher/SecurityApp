@@ -22,18 +22,22 @@ public static class DbSeeder
             logger.LogInformation("Applying migrations...");
             await context.Database.MigrateAsync();
 
-            if (!await context.Incidents.AnyAsync())
-            {
-                logger.LogInformation("Seeding initial incidents...");
-                var incidents = GenerateMockIncidents();
-                await context.Incidents.AddRangeAsync(incidents);
-                await context.SaveChangesAsync();
-                logger.LogInformation("Successfully inserted mock incidents.");
-            }
-            else
-            {
-                logger.LogInformation("Database already contains incidents. Skipping seed.");
-            }
+            logger.LogInformation("Wiping existing incidents and audit logs for a fresh mock state...");
+            
+            // ExecuteDeleteAsync performs a bulk physical delete directly against the database, 
+            // bypassing EF Core's ChangeTracker and therefore bypassing our Soft Delete / Audit Log overrides.
+            await context.AuditLogs.ExecuteDeleteAsync();
+            await context.Incidents.IgnoreQueryFilters().ExecuteDeleteAsync();
+
+            logger.LogInformation("Seeding 100 new secure randomized incidents...");
+            var incidents = GenerateMockIncidents(100);
+            await context.Incidents.AddRangeAsync(incidents);
+            
+            // This SaveChangesAsync WILL trigger the Audit Logging interceptors we wrote,
+            // effectively creating 100 new Audit Logs for the "Added" action.
+            await context.SaveChangesAsync();
+            
+            logger.LogInformation("Successfully inserted 100 mock incidents and generated corresponding Audit Logs.");
         }
         catch (Exception ex)
         {
@@ -42,84 +46,34 @@ public static class DbSeeder
         }
     }
 
-    private static List<Incident> GenerateMockIncidents()
+    private static List<Incident> GenerateMockIncidents(int count)
     {
-        return new List<Incident>
-        {
-            new Incident
-            {
-                IncidentDate = DateTime.UtcNow.AddDays(-1),
-                Status = IncidentStatus.Open,
-                ReporterFirstName = "John",
-                ReporterLastName = "Doe",
-                ReporterEmail = "jdoe@courtroom.local",
-                ReporterJobTitle = "Bailiff",
-                County = "Franklin",
-                Division = "Criminal",
-                Courthouse = "Main Justice Center",
-                LocationWithinCourthouse = "Courtroom 3B",
-                RelatedDocketNumber = "CR-2026-0042",
-                Type = IncidentType.PhysicalAltercation,
-                WeaponInvolved = false,
-                ContrabandSeized = false,
-                Narrative = "Two individuals began shouting match in gallery which escalated to a brief scuffle. Deputies intervened and separated parties."
-            },
-            new Incident
-            {
-                IncidentDate = DateTime.UtcNow.AddDays(-3),
-                Status = IncidentStatus.UnderReview,
-                ReporterFirstName = "Sarah",
-                ReporterLastName = "Smith",
-                ReporterEmail = "ssmith@courtroom.local",
-                ReporterJobTitle = "Security Supervisor",
-                County = "Franklin",
-                Division = "Family",
-                Courthouse = "Annex Building",
-                LocationWithinCourthouse = "Main Entrance Security Checkpoint",
-                Type = IncidentType.ContrabandFound,
-                WeaponInvolved = true,
-                WeaponType = "Pocket Knife (3 inch blade)",
-                ContrabandSeized = true,
-                ContrabandType = "Weapon",
-                Narrative = "During routine magnetometer screening, an individual attempted to conceal a pocket knife in their shoe. Item was confiscated."
-            },
-            new Incident
-            {
-                IncidentDate = DateTime.UtcNow.AddDays(-7),
-                Status = IncidentStatus.Closed,
-                ReporterFirstName = "Michael",
-                ReporterLastName = "Johnson",
-                ReporterEmail = "mjohnson@courtroom.local",
-                ReporterJobTitle = "Clerk",
-                County = "Franklin",
-                Division = "Civil",
-                Courthouse = "Main Justice Center",
-                LocationWithinCourthouse = "3rd Floor Hallway",
-                Type = IncidentType.MedicalEmergency,
-                WeaponInvolved = false,
-                ContrabandSeized = false,
-                Narrative = "Elderly witness fainted outside courtroom. EMTs were called and transported individual to general hospital."
-            },
-            new Incident
-            {
-                IncidentDate = DateTime.UtcNow.AddHours(-2),
-                Status = IncidentStatus.Escalated,
-                ReporterFirstName = "Hon. James",
-                ReporterLastName = "Wilson",
-                ReporterEmail = "jwilson@courtroom.local",
-                ReporterJobTitle = "Judge",
-                County = "Franklin",
-                Division = "Criminal",
-                Courthouse = "Main Justice Center",
-                LocationWithinCourthouse = "Courtroom 1A",
-                RelatedDocketNumber = "CR-2026-0158",
-                SuspectFirstName = "Robert",
-                SuspectLastName = "Tables",
-                Type = IncidentType.VerbalThreat,
-                WeaponInvolved = false,
-                ContrabandSeized = false,
-                Narrative = "Defendant directed profane language and verbal threats toward opposing counsel after verdict was read. Defendant was removed holding cell. Recommend additional security for sentencing phase."
-            }
-        };
+        // Using Bogus to generate realistic, securely faked data
+        var faker = new Bogus.Faker<Incident>()
+            .RuleFor(i => i.Id, f => Guid.NewGuid())
+            .RuleFor(i => i.IncidentDate, f => f.Date.Past(1).ToUniversalTime())
+            .RuleFor(i => i.ReportDate, (f, i) => i.IncidentDate.AddHours(f.Random.Int(1, 48)).ToUniversalTime())
+            .RuleFor(i => i.Status, f => f.PickRandom<IncidentStatus>())
+            .RuleFor(i => i.ReporterFirstName, f => f.Name.FirstName())
+            .RuleFor(i => i.ReporterLastName, f => f.Name.LastName())
+            .RuleFor(i => i.ReporterEmail, (f, i) => f.Internet.Email(i.ReporterFirstName, i.ReporterLastName))
+            .RuleFor(i => i.ReporterJobTitle, f => f.Name.JobTitle())
+            .RuleFor(i => i.ReporterEmployeeId, f => f.Random.Replace("EMP-####"))
+            .RuleFor(i => i.County, f => f.Address.County())
+            .RuleFor(i => i.Division, f => f.PickRandom("Criminal", "Civil", "Family", "Probate", "Juvenile"))
+            .RuleFor(i => i.Courthouse, f => f.Address.City() + " Justice Center")
+            .RuleFor(i => i.LocationWithinCourthouse, f => "Room " + f.Random.Int(100, 999))
+            .RuleFor(i => i.RelatedDocketNumber, f => f.Random.Replace("CR-202#-####"))
+            .RuleFor(i => i.CaseName, f => $"State vs. {f.Name.LastName()}")
+            .RuleFor(i => i.SuspectFirstName, f => f.Random.Bool(0.7f) ? f.Name.FirstName() : null)
+            .RuleFor(i => i.SuspectLastName, (f, i) => i.SuspectFirstName != null ? f.Name.LastName() : null)
+            .RuleFor(i => i.Type, f => f.PickRandom<IncidentType>())
+            .RuleFor(i => i.WeaponInvolved, f => f.Random.Bool(0.15f))
+            .RuleFor(i => i.WeaponType, (f, i) => i.WeaponInvolved ? f.PickRandom("Pocket Knife", "Firearm", "Blunt Object", "Box Cutter") : null)
+            .RuleFor(i => i.ContrabandSeized, f => f.Random.Bool(0.2f))
+            .RuleFor(i => i.ContrabandType, (f, i) => i.ContrabandSeized ? f.PickRandom("Narcotics", "Paraphernalia", "Unauthorized Electronics") : null)
+            .RuleFor(i => i.Narrative, f => f.Lorem.Paragraphs(f.Random.Int(1, 3)));
+
+        return faker.Generate(count);
     }
 }
