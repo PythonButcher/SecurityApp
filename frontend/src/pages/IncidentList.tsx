@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Filter, Download } from 'lucide-react';
 
 interface Incident {
@@ -12,6 +13,7 @@ interface Incident {
 }
 
 const IncidentList: React.FC = () => {
+    const navigate = useNavigate();
     const [incidents, setIncidents] = useState<Incident[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -63,7 +65,7 @@ const IncidentList: React.FC = () => {
                     <button className="btn btn-ghost">
                         <Download size={18} /> Export
                     </button>
-                    <button className="btn btn-primary">
+                    <button className="btn btn-primary" onClick={() => navigate('/incidents/new')}>
                         <Plus size={18} /> New Report
                     </button>
                 </div>
