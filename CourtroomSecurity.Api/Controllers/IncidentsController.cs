@@ -65,9 +65,9 @@ public class IncidentsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateIncident(Guid id, [FromBody] Incident incident)
+    public async Task<IActionResult> UpdateIncident(Guid id, [FromBody] UpdateIncidentDto dto)
     {
-        if (id != incident.Id)
+        if (id != dto.Id)
         {
             return BadRequest("Incident ID mismatch");
         }
@@ -78,13 +78,25 @@ public class IncidentsController : ControllerBase
             return NotFound();
         }
 
-        // Ideally we would map from a DTO here instead of binding the Entity directly
-        // For brevity, updating the entity properties
-        existingIncident.IncidentDate = incident.IncidentDate;
-        existingIncident.Status = incident.Status;
-        existingIncident.Type = incident.Type;
-        existingIncident.Narrative = incident.Narrative;
-        // ... map other fields ...
+        // Map from DTO to Entity
+        existingIncident.Status = dto.Status;
+        existingIncident.Type = dto.Type;
+        existingIncident.Narrative = dto.Narrative;
+        existingIncident.County = dto.County;
+        existingIncident.Division = dto.Division;
+        existingIncident.Courthouse = dto.Courthouse;
+        existingIncident.LocationWithinCourthouse = dto.LocationWithinCourthouse;
+        existingIncident.RelatedDocketNumber = dto.RelatedDocketNumber;
+        existingIncident.CaseName = dto.CaseName;
+        existingIncident.SuspectFirstName = dto.SuspectFirstName;
+        existingIncident.SuspectLastName = dto.SuspectLastName;
+        existingIncident.AdditionalIdentifiers = dto.AdditionalIdentifiers;
+        existingIncident.WeaponInvolved = dto.WeaponInvolved;
+        existingIncident.WeaponType = dto.WeaponType;
+        existingIncident.ContrabandSeized = dto.ContrabandSeized;
+        existingIncident.ContrabandType = dto.ContrabandType;
+        
+        existingIncident.LastUpdatedAt = DateTime.UtcNow;
 
         await _incidentRepository.UpdateAsync(existingIncident);
         return NoContent();
