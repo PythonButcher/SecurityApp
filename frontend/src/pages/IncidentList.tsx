@@ -81,19 +81,20 @@ const IncidentList: React.FC = () => {
                             <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>LOCATION</th>
                             <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>STATUS</th>
                             <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>REPORTER</th>
+                            <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>ACTIONS</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading && (
                             <tr>
-                                <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                <td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                                     Loading remote incidents from database...
                                 </td>
                             </tr>
                         )}
                         {!loading && incidents.length === 0 && (
                             <tr>
-                                <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                <td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                                     No incidents found.
                                 </td>
                             </tr>
@@ -106,6 +107,11 @@ const IncidentList: React.FC = () => {
                                 <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)' }}>{inc.locationWithinCourthouse}</td>
                                 <td style={{ padding: '1.25rem 1.5rem' }}>{getStatusBadge(inc.status)}</td>
                                 <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)' }}>{inc.reporterFirstName} {inc.reporterLastName}</td>
+                                <td style={{ padding: '1.25rem 1.5rem' }}>
+                                    <button className="btn btn-ghost" onClick={() => navigate(`/incidents/edit/${inc.id}`)} style={{ padding: '0.5rem', color: 'var(--text-primary)' }} title="Edit Record (Management Only)">
+                                        Edit
+                                    </button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
