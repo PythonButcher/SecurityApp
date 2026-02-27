@@ -103,7 +103,7 @@ const EditIncident: React.FC = () => {
                 <div style={{
                     padding: '1rem',
                     marginBottom: '2rem',
-                    backgroundColor: 'rgba(255, 42, 95, 0.1)',
+                    backgroundColor: 'var(--bg-glass)',
                     border: '1px solid var(--accent-danger)',
                     borderRadius: '8px',
                     color: 'var(--accent-danger)',

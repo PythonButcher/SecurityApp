@@ -7,12 +7,16 @@ import {
     Users,
     Settings,
     Search,
-    Bell
+    Bell,
+    Sun,
+    Moon
 } from 'lucide-react';
+import { useTheme } from '../components/ThemeContext';
 import '../App.css';
 
 const MainLayout: React.FC = () => {
     const location = useLocation();
+    const { theme, toggleTheme } = useTheme();
 
     // Helper to get breadcrumb name
     const getPageTitle = () => {
@@ -73,6 +77,9 @@ const MainLayout: React.FC = () => {
                     </div>
 
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                        <button className="btn-ghost" onClick={toggleTheme} style={{ padding: '0.5rem', borderRadius: '50%' }} title="Toggle Theme">
+                            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                        </button>
                         <button className="btn-ghost" style={{ padding: '0.5rem', borderRadius: '50%' }}>
                             <Search size={20} />
                         </button>

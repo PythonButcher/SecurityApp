@@ -11,7 +11,8 @@ interface Incident {
     locationWithinCourthouse: string;
 }
 
-const COLORS = ['#00e5ff', '#ffb300', '#ff2a5f', '#64748b', '#a855f7'];
+// Fallback colors are no longer used for pie chart as we use variables directly below
+const COLORS = ['var(--accent-primary)', 'var(--accent-warning)', 'var(--accent-danger)', 'var(--text-muted)', 'var(--accent-success)'];
 
 const Dashboard: React.FC = () => {
     const [incidents, setIncidents] = useState<Incident[]>([]);
@@ -188,7 +189,7 @@ const Dashboard: React.FC = () => {
                             <p style={{ margin: 0, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Open</p>
                             <h1 style={{ margin: '0.5rem 0 0 0' }}>{openCount}</h1>
                         </div>
-                        <div style={{ padding: '0.5rem', background: 'rgba(0, 229, 255, 0.1)', borderRadius: '8px', color: 'var(--accent-primary)' }}>
+                        <div style={{ padding: '0.5rem', background: 'var(--bg-glass)', borderRadius: '8px', color: 'var(--accent-primary)', border: '1px solid var(--border-glass)' }}>
                             <FileWarning size={24} />
                         </div>
                     </div>
@@ -200,7 +201,7 @@ const Dashboard: React.FC = () => {
                             <p style={{ margin: 0, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Escalated</p>
                             <h1 style={{ margin: '0.5rem 0 0 0', color: 'var(--accent-danger)' }}>{escalatedCount}</h1>
                         </div>
-                        <div style={{ padding: '0.5rem', background: 'rgba(255, 42, 95, 0.1)', borderRadius: '8px', color: 'var(--accent-danger)' }}>
+                        <div style={{ padding: '0.5rem', background: 'var(--bg-glass)', borderRadius: '8px', color: 'var(--accent-danger)', border: '1px solid var(--border-glass)' }}>
                             <AlertTriangle size={24} />
                         </div>
                     </div>
@@ -212,7 +213,7 @@ const Dashboard: React.FC = () => {
                             <p style={{ margin: 0, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Under Review</p>
                             <h1 style={{ margin: '0.5rem 0 0 0', color: 'var(--accent-warning)' }}>{reviewCount}</h1>
                         </div>
-                        <div style={{ padding: '0.5rem', background: 'rgba(255, 179, 0, 0.1)', borderRadius: '8px', color: 'var(--accent-warning)' }}>
+                        <div style={{ padding: '0.5rem', background: 'var(--bg-glass)', borderRadius: '8px', color: 'var(--accent-warning)', border: '1px solid var(--border-glass)' }}>
                             <Clock size={24} />
                         </div>
                     </div>
@@ -224,7 +225,7 @@ const Dashboard: React.FC = () => {
                             <p style={{ margin: 0, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cleared</p>
                             <h1 style={{ margin: '0.5rem 0 0 0', color: 'var(--accent-success)' }}>{filteredIncidents.length - openCount - reviewCount - escalatedCount}</h1>
                         </div>
-                        <div style={{ padding: '0.5rem', background: 'rgba(0, 230, 118, 0.1)', borderRadius: '8px', color: 'var(--accent-success)' }}>
+                        <div style={{ padding: '0.5rem', background: 'var(--bg-glass)', borderRadius: '8px', color: 'var(--accent-success)', border: '1px solid var(--border-glass)' }}>
                             <Shield size={24} />
                         </div>
                     </div>
